@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  nestjs-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: ai-interview-backend-dev
+    ports:
+      - "3001:3000"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    environment:
+      - MONGODB_URI=mongodb+srv://zeenat_00:SummerTime%409383@cluster0.lpdw1ur.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+
+  redis:
+    image: redis:7
+    container_name: ai-interview-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  node_modules:

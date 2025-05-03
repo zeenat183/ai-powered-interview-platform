@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: nest-backend
+    ports:
+      - "3000:3000"
+    environment:
+      MONGODB_URI: mongodb+srv://<username>:<encodedPassword>@cluster0.lpdw1ur.mongodb.net/ai-interview?retryWrites=true&w=majority
+    restart: always
