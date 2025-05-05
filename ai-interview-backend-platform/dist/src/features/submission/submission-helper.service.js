@@ -19,6 +19,7 @@ let SubmissionHelperService = class SubmissionHelperService {
         this.repo = repo;
     }
     async createSubmission(dto) {
+        console.log('---------createSubmission--------', JSON.stringify(dto));
         const [error, submission] = await (0, to_utils_1.to)(this.repo.create(dto));
         if (error || !submission) {
             throw new common_1.InternalServerErrorException('Failed to create submission');

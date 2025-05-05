@@ -15,22 +15,67 @@ const rxjs_1 = require("rxjs");
 const submission_dto_1 = require("../../interfaces/submission.dto");
 const submission_helper_service_1 = require("./submission-helper.service");
 const judge0_service_1 = require("../../http/judge0/judge0.service");
+const question_helper_service_1 = require("../question/question-helper.service");
+const question_dto_1 = require("../../interfaces/question.dto");
+const submission_service_1 = require("../../core/submission/submission.service");
 let SubmissionService = class SubmissionService {
     helper;
+    questionHelper;
     judge0;
-    constructor(helper, judge0) {
+    coreSubmissionService;
+    constructor(helper, questionHelper, judge0, coreSubmissionService) {
         this.helper = helper;
+        this.questionHelper = questionHelper;
         this.judge0 = judge0;
+        this.coreSubmissionService = coreSubmissionService;
     }
-    createSubmission(dto) {
-        const { submissionDetails, ...rest } = dto;
-        const attempt = submissionDetails[0];
-        const languageId = this.mapLanguageToJudge0Id(attempt.language);
-        return (0, rxjs_1.from)(this.judge0.submitCode(attempt.answer, languageId)).pipe((0, rxjs_1.switchMap)((judge0Result) => {
+    createSubmission({ dto, }) {
+        const { submissionDetails, questionId, questionType, ...rest } = dto;
+        const attempt = { ...submissionDetails[0], result: null, status: submission_dto_1.SubmissionAttemptStatus.PENDING, feedback: null, resultMap: {} };
+        const language = attempt.language;
+        const languageId = this.mapLanguageToJudge0Id(language);
+        return (0, rxjs_1.from)(this.questionHelper.getQuestionById(questionId)).pipe((0, rxjs_1.switchMap)((question) => {
+            if (!question || question.questionType !== question_dto_1.QuestionType.DSA) {
+                throw new common_1.NotFoundException('Question not found or invalid question');
+            }
+            const questionDetails = question.questionDetails;
+            if (!('dsaQuestion' in questionDetails)) {
+                throw new common_1.NotFoundException('Invalid question type. Expected DSA.');
+            }
+            const dsaQuestion = questionDetails.dsaQuestion;
+            if (!dsaQuestion ||
+                !dsaQuestion.codeTemplates ||
+                !dsaQuestion.exampleTestCases ||
+                !dsaQuestion.hiddenTestCases) {
+                throw new common_1.NotFoundException('Invalid question structure for DSA type');
+            }
+            const template = dsaQuestion.codeTemplates[language];
+            if (!template)
+                throw new common_1.NotFoundException(`No template for language ${language}`);
+            return this.coreSubmissionService.wrapCode(attempt.answer, language, template, dsaQuestion.exampleTestCases, dsaQuestion.hiddenTestCases).pipe((0, rxjs_1.switchMap)((finalCode) => {
+                console.log('--------finalCode-------', finalCode);
+                return (0, rxjs_1.from)(this.judge0.submitCode(finalCode, languageId)).pipe((0, rxjs_1.map)((judge0Result) => ({
+                    judge0Result,
+                    dsaQuestion,
+                })));
+            }));
+        }), (0, rxjs_1.switchMap)(({ judge0Result, dsaQuestion }) => {
             attempt.result = judge0Result;
             attempt.status = this.getStatusFromJudge0(judge0Result.status?.description || '');
-            return (0, rxjs_1.from)(this.helper.createSubmission({ ...rest, submissionDetails: [attempt] }));
-        }), (0, rxjs_1.map)(submission => this.toResponseDto(submission)));
+            const feedback = this.coreSubmissionService.mapTestCaseResults({
+                exampleTestCases: dsaQuestion.exampleTestCases,
+                hiddenTestCases: dsaQuestion.hiddenTestCases,
+                stdout: judge0Result.stdout || '',
+            });
+            console.log("----------feedback-----------", feedback);
+            attempt.resultMap = feedback;
+            return (0, rxjs_1.from)(this.helper.createSubmission({
+                questionId,
+                questionType,
+                ...rest,
+                submissionDetails: [attempt],
+            }));
+        }), (0, rxjs_1.map)((submission) => this.toResponseDto(submission)));
     }
     getSubmissionById(id) {
         return (0, rxjs_1.from)(this.helper.getSubmissionById(id)).pipe((0, rxjs_1.map)(sub => this.toResponseDto(sub)));
@@ -71,6 +116,8 @@ exports.SubmissionService = SubmissionService;
 exports.SubmissionService = SubmissionService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [submission_helper_service_1.SubmissionHelperService,
-        judge0_service_1.Judge0Service])
+        question_helper_service_1.QuestionHelperService,
+        judge0_service_1.Judge0Service,
+        submission_service_1.CoreSubmissionService])
 ], SubmissionService);
 //# sourceMappingURL=submission.service.js.map

@@ -15,6 +15,8 @@ const submission_service_1 = require("./submission.service");
 const submission_helper_service_1 = require("./submission-helper.service");
 const judge0_module_1 = require("../../http/judge0/judge0.module");
 const submission_repository_1 = require("../../database/repositories/submission.repository");
+const question_module_1 = require("../question/question.module");
+const submission_module_1 = require("../../core/submission/submission.module");
 let SubmissionModule = class SubmissionModule {
 };
 exports.SubmissionModule = SubmissionModule;
@@ -22,7 +24,9 @@ exports.SubmissionModule = SubmissionModule = __decorate([
     (0, common_1.Module)({
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: submission_schema_1.Submission.name, schema: submission_schema_1.SubmissionSchema }]),
-            judge0_module_1.Judge0Module
+            judge0_module_1.Judge0Module,
+            question_module_1.QuestionModule,
+            submission_module_1.CoreSubmissionModule
         ],
         controllers: [submmission_controller_1.SubmissionController],
         providers: [submission_service_1.SubmissionService, submission_helper_service_1.SubmissionHelperService, submission_repository_1.SubmissionRepository],

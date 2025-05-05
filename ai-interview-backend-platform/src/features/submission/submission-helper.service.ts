@@ -1,7 +1,8 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { SubmissionRepository } from 'src/database/repositories/submission.repository';
-import { CreateSubmissionDto } from 'src/interfaces/submission.dto';
+import { CreateSubmissionDto, SubmissionDetailDto, SubmissionStatus } from 'src/interfaces/submission.dto';
 import { to } from 'src/common/utils/to.utils';
+import { QuestionType } from 'src/interfaces/question.dto';
 
 @Injectable()
 export class SubmissionHelperService {

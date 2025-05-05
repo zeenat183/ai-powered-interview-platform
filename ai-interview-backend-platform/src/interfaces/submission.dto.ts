@@ -7,6 +7,7 @@ import {
     IsOptional,
     IsObject,
     IsDate,
+    IsArray,
   } from 'class-validator';
   import { Type } from 'class-transformer';
 import { QuestionType } from './question.dto';
@@ -24,28 +25,54 @@ export enum SubmissionAttemptStatus {
     PASSED = 'passed',
   }
 
+  export class MappedTestCaseResultDto {
+    @IsString()
+    input: string;
+  
+    @IsString()
+    expectedOutput: string;
+  
+    @IsString()
+    actualOutput: string;
+  
+    @IsEnum(['example', 'hidden'])
+    type: 'example' | 'hidden';
+  }
+  
   export class SubmissionDetailDto {
     @IsString()
     @IsNotEmpty()
     answer: string;
   
-    @IsObject()
-    @IsNotEmpty()
-    result: Record<string, any>;
+   
   
     @IsOptional()
     @IsString()
     language?: string;
+
+    
   
+    @IsOptional()
+    submittedAt?: Date;
+  }
+
+  export class SubmissionResultDetailsDto extends SubmissionDetailDto{
     @IsOptional()
     @IsObject()
     feedback?: Record<string, any>|null;
   
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => MappedTestCaseResultDto)
+    resultMap?: MappedTestCaseResultDto[] | null;
+  
     @IsEnum(SubmissionAttemptStatus)
     status: SubmissionAttemptStatus;
-  
-    @IsOptional()
-    submittedAt?: Date;
+
+    @IsObject()
+    @IsNotEmpty()
+    result: Record<string, any>;
   }
   
   export class CreateSubmissionDto {
@@ -86,8 +113,8 @@ export enum SubmissionAttemptStatus {
     status: SubmissionStatus;
   
     @ValidateNested({ each: true })
-    @Type(() => SubmissionDetailDto)
-    submissionDetails: SubmissionDetailDto[];
+    @Type(() => SubmissionResultDetailsDto)
+    submissionDetails: SubmissionResultDetailsDto[];
   
     // @IsDate()
     // createdAt: Date;

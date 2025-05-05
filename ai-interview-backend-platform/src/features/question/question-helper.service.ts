@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { QuestionRepository } from '../../database/repositories/question.repository';
 import { CreateQuestionDto } from 'src/interfaces/question.dto';
 import { to } from 'src/common/utils/to.utils';
@@ -9,8 +9,14 @@ export class QuestionHelperService {
 
   async createQuestion(dto: CreateQuestionDto) {
     const [error, question] = await to(this.repo.create(dto));
-    if (error || !question) {
-        
+    if (error || !question) { 
+      if (
+        error?.name === 'MongoServerError' &&
+       (error as any)?.code === 11000 &&
+       (error as any)?.keyPattern?.title
+      ) {
+        throw new BadRequestException('A question with this title already exists');
+      }
       throw new InternalServerErrorException('Failed to create question');
     }
     return question;
@@ -21,7 +27,7 @@ export class QuestionHelperService {
     if (error) {
       throw new InternalServerErrorException('Failed to get questions');
     }
-    if (!questions) throw new NotFoundException('User not found');
+    if (!questions) throw new NotFoundException('Question not found');
     return questions;
   }
 
@@ -30,7 +36,7 @@ export class QuestionHelperService {
     if (error) {
       throw new InternalServerErrorException('Failed to get question');
     }
-    if (!question) throw new NotFoundException('User not found');
+    if (!question) throw new NotFoundException('Question not found');
     return question;
   }
 }

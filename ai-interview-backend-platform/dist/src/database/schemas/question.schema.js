@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QuestionSchema = exports.Question = exports.Difficulty = void 0;
+exports.QuestionSchema = exports.Question = exports.Difficulty = exports.QuestionType = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 const uuid_1 = require("uuid");
 var QuestionType;
@@ -17,7 +17,7 @@ var QuestionType;
     QuestionType["DSA"] = "dsa";
     QuestionType["APTITUDE_MCQ"] = "aptitude_mcq";
     QuestionType["SYSTEM_DESIGN"] = "system_design";
-})(QuestionType || (QuestionType = {}));
+})(QuestionType || (exports.QuestionType = QuestionType = {}));
 var Difficulty;
 (function (Difficulty) {
     Difficulty["EASY"] = "easy";

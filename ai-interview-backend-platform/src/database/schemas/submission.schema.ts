@@ -26,6 +26,21 @@ export enum SubmissionStatus {
 
 // ------------------ SUBMISSION DETAIL ------------------
 
+@Schema({ _id: false }) // _id: false is important for embedded subdocuments
+export class MappedTestCaseResult {
+  @Prop({ required: true })
+  input: string;
+
+  @Prop({ required: true })
+  expectedOutput: string;
+
+  @Prop({ required: true })
+  actualOutput: string;
+
+  @Prop({ required: true, enum: ['example', 'hidden'] })
+  type: 'example' | 'hidden';
+}
+
 @Schema()
 export class SubmissionDetail {
   @Prop({ required: true })
@@ -42,6 +57,9 @@ export class SubmissionDetail {
 
   @Prop({ required: true, enum: Object.values(SubmissionAttemptStatus) })
   status: SubmissionAttemptStatus;
+
+  @Prop({ type: [MappedTestCaseResult], default: [] })
+  resultMap?: MappedTestCaseResult[];
 
   @Prop({ default: Date.now })
   submittedAt?: Date;

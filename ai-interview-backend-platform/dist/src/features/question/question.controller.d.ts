@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 export declare class QuestionController {
     private readonly questionService;
     constructor(questionService: QuestionService);
-    create(dto: CreateQuestionDto): Observable<QuestionResponseDto>;
+    create(body: CreateQuestionDto): Observable<QuestionResponseDto>;
     getAll(): Observable<QuestionResponseDto[]>;
     getById(id: string): Observable<QuestionResponseDto>;
 }

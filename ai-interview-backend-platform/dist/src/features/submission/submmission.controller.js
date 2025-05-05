@@ -23,7 +23,7 @@ let SubmissionController = class SubmissionController {
         this.submissionService = submissionService;
     }
     createSubmission(dto) {
-        return this.submissionService.createSubmission(dto);
+        return this.submissionService.createSubmission({ dto });
     }
     getSubmissionById(id) {
         return this.submissionService.getSubmissionById(id);

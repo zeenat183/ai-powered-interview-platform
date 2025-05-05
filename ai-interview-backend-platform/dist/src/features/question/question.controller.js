@@ -21,12 +21,15 @@ const roles_decorator_1 = require("../../common/decorators/roles.decorator");
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const roles_guard_1 = require("../../common/guards/roles.guard");
 const user_dto_1 = require("../../interfaces/user.dto");
+const class_transformer_1 = require("class-transformer");
 let QuestionController = class QuestionController {
     questionService;
     constructor(questionService) {
         this.questionService = questionService;
     }
-    create(dto) {
+    create(body) {
+        const dto = (0, class_transformer_1.plainToInstance)(question_dto_1.CreateQuestionDto, body);
+        this.questionService.validateAndAssignQuestionDetails(dto, body);
         return this.questionService.createQuestion(dto);
     }
     getAll() {

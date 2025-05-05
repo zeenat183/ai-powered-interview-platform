@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SubmissionSchema = exports.Submission = exports.SubmissionDetail = exports.SubmissionStatus = exports.SubmissionAttemptStatus = exports.QuestionType = void 0;
+exports.SubmissionSchema = exports.Submission = exports.SubmissionDetail = exports.MappedTestCaseResult = exports.SubmissionStatus = exports.SubmissionAttemptStatus = exports.QuestionType = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 var QuestionType;
 (function (QuestionType) {
@@ -30,12 +30,39 @@ var SubmissionStatus;
     SubmissionStatus["ATTEMPTED"] = "attempted";
     SubmissionStatus["PASSED"] = "passed";
 })(SubmissionStatus || (exports.SubmissionStatus = SubmissionStatus = {}));
+let MappedTestCaseResult = class MappedTestCaseResult {
+    input;
+    expectedOutput;
+    actualOutput;
+    type;
+};
+exports.MappedTestCaseResult = MappedTestCaseResult;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], MappedTestCaseResult.prototype, "input", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], MappedTestCaseResult.prototype, "expectedOutput", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], MappedTestCaseResult.prototype, "actualOutput", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, enum: ['example', 'hidden'] }),
+    __metadata("design:type", String)
+], MappedTestCaseResult.prototype, "type", void 0);
+exports.MappedTestCaseResult = MappedTestCaseResult = __decorate([
+    (0, mongoose_1.Schema)({ _id: false })
+], MappedTestCaseResult);
 let SubmissionDetail = class SubmissionDetail {
     answer;
     result;
     language;
     feedback;
     status;
+    resultMap;
     submittedAt;
 };
 exports.SubmissionDetail = SubmissionDetail;
@@ -59,6 +86,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true, enum: Object.values(SubmissionAttemptStatus) }),
     __metadata("design:type", String)
 ], SubmissionDetail.prototype, "status", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [MappedTestCaseResult], default: [] }),
+    __metadata("design:type", Array)
+], SubmissionDetail.prototype, "resultMap", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ default: Date.now }),
     __metadata("design:type", Date)

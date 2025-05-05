@@ -11,7 +11,7 @@ export class SubmissionController {
 
   @Post()
   createSubmission(@Body() dto: CreateSubmissionDto): Observable<SubmissionResponseDto> {
-    return this.submissionService.createSubmission(dto);
+    return this.submissionService.createSubmission({dto});
   }
 
   @Get(':id')

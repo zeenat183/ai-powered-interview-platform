@@ -10,13 +10,22 @@ export declare enum SubmissionStatus {
     ATTEMPTED = "attempted",
     PASSED = "passed"
 }
+export declare class MappedTestCaseResultDto {
+    input: string;
+    expectedOutput: string;
+    actualOutput: string;
+    type: 'example' | 'hidden';
+}
 export declare class SubmissionDetailDto {
     answer: string;
-    result: Record<string, any>;
     language?: string;
-    feedback?: Record<string, any> | null;
-    status: SubmissionAttemptStatus;
     submittedAt?: Date;
+}
+export declare class SubmissionResultDetailsDto extends SubmissionDetailDto {
+    feedback?: Record<string, any> | null;
+    resultMap?: MappedTestCaseResultDto[] | null;
+    status: SubmissionAttemptStatus;
+    result: Record<string, any>;
 }
 export declare class CreateSubmissionDto {
     userId: string;
@@ -30,7 +39,7 @@ export declare class SubmissionResponseDto {
     questionId: string;
     questionType: QuestionType;
     status: SubmissionStatus;
-    submissionDetails: SubmissionDetailDto[];
+    submissionDetails: SubmissionResultDetailsDto[];
     createdAt?: Date;
     updatedAt?: Date;
     _id?: any;

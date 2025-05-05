@@ -1,6 +1,6 @@
 import { Document } from 'mongoose';
 export type QuestionDocument = Question & Document;
-declare enum QuestionType {
+export declare enum QuestionType {
     DSA = "dsa",
     APTITUDE_MCQ = "aptitude_mcq",
     SYSTEM_DESIGN = "system_design"
@@ -10,6 +10,16 @@ export declare enum Difficulty {
     MEDIUM = "medium",
     HARD = "hard"
 }
+export type LanguageTemplates = {
+    cpp: string;
+    java: string;
+    python: string;
+    javascript: string;
+};
+export type TestCase = {
+    input: any[];
+    expectedOutput: string;
+};
 export interface DsaQuestion {
     constraints?: string;
     exampleTestCases: {
@@ -21,6 +31,7 @@ export interface DsaQuestion {
         input: string;
         output: string;
     }[];
+    codeTemplates: LanguageTemplates;
 }
 export interface AptitudeMcqQuestion {
     options: string[];
@@ -56,4 +67,3 @@ export declare const QuestionSchema: import("mongoose").Schema<Question, import(
 } & {
     __v: number;
 }>;
-export {};

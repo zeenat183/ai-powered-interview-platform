@@ -21,6 +21,11 @@ let QuestionHelperService = class QuestionHelperService {
     async createQuestion(dto) {
         const [error, question] = await (0, to_utils_1.to)(this.repo.create(dto));
         if (error || !question) {
+            if (error?.name === 'MongoServerError' &&
+                error?.code === 11000 &&
+                error?.keyPattern?.title) {
+                throw new common_1.BadRequestException('A question with this title already exists');
+            }
             throw new common_1.InternalServerErrorException('Failed to create question');
         }
         return question;
@@ -31,7 +36,7 @@ let QuestionHelperService = class QuestionHelperService {
             throw new common_1.InternalServerErrorException('Failed to get questions');
         }
         if (!questions)
-            throw new common_1.NotFoundException('User not found');
+            throw new common_1.NotFoundException('Question not found');
         return questions;
     }
     async getQuestionById(id) {
@@ -40,7 +45,7 @@ let QuestionHelperService = class QuestionHelperService {
             throw new common_1.InternalServerErrorException('Failed to get question');
         }
         if (!question)
-            throw new common_1.NotFoundException('User not found');
+            throw new common_1.NotFoundException('Question not found');
         return question;
     }
 };

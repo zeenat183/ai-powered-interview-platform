@@ -32,7 +32,7 @@ exports.QuestionModule = QuestionModule = __decorate([
         ],
         controllers: [question_controller_1.QuestionController],
         providers: [question_service_1.QuestionService, question_repository_1.QuestionRepository, question_helper_service_1.QuestionHelperService],
-        exports: [question_service_1.QuestionService],
+        exports: [question_service_1.QuestionService, question_helper_service_1.QuestionHelperService],
     })
 ], QuestionModule);
 //# sourceMappingURL=question.module.js.map

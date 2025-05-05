@@ -16,12 +16,19 @@ export declare enum SubmissionStatus {
     ATTEMPTED = "attempted",
     PASSED = "passed"
 }
+export declare class MappedTestCaseResult {
+    input: string;
+    expectedOutput: string;
+    actualOutput: string;
+    type: 'example' | 'hidden';
+}
 export declare class SubmissionDetail {
     answer: string;
     result: Record<string, any>;
     language?: string;
     feedback?: Record<string, any> | null;
     status: SubmissionAttemptStatus;
+    resultMap?: MappedTestCaseResult[];
     submittedAt?: Date;
 }
 export declare class Submission {
