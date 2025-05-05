@@ -6,6 +6,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Role } from 'src/interfaces/user.dto';
+import { plainToInstance } from 'class-transformer';
 
 
 @Controller('questions')
@@ -15,7 +16,11 @@ export class QuestionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post()
-  create(@Body() dto: CreateQuestionDto): Observable<QuestionResponseDto> {
+  create(@Body() body: CreateQuestionDto): Observable<QuestionResponseDto> {
+    const dto = plainToInstance(CreateQuestionDto, body);
+
+    this.questionService.validateAndAssignQuestionDetails(dto, body);
+  
     return this.questionService.createQuestion(dto);
   }
 

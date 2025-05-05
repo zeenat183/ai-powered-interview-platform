@@ -5,6 +5,7 @@ export declare class QuestionService {
     private readonly helper;
     constructor(helper: QuestionHelperService);
     createQuestion(dto: CreateQuestionDto): Observable<QuestionResponseDto>;
+    validateAndAssignQuestionDetails(dto: CreateQuestionDto, body: any): void;
     getAllQuestions(): Observable<QuestionResponseDto[]>;
     getQuestionById(id: string): Observable<QuestionResponseDto>;
     private toResponseDto;

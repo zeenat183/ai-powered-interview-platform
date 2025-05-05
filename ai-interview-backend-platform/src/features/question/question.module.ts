@@ -20,6 +20,6 @@ import { RedisModule } from 'src/common/redis/redis.module';
   ],
   controllers: [QuestionController],
   providers: [QuestionService,QuestionRepository,QuestionHelperService],
-  exports: [QuestionService],
+  exports: [QuestionService,QuestionHelperService],
 })
 export class QuestionModule {}

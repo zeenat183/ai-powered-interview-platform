@@ -10,6 +10,7 @@ exports.FeaturesModule = void 0;
 const common_1 = require("@nestjs/common");
 const user_module_1 = require("./user/user.module");
 const question_module_1 = require("./question/question.module");
+const submission_module_1 = require("./submission/submission.module");
 let FeaturesModule = class FeaturesModule {
 };
 exports.FeaturesModule = FeaturesModule;
@@ -18,10 +19,12 @@ exports.FeaturesModule = FeaturesModule = __decorate([
         imports: [
             user_module_1.UserModule,
             question_module_1.QuestionModule,
+            submission_module_1.SubmissionModule
         ],
         exports: [
             user_module_1.UserModule,
             question_module_1.QuestionModule,
+            submission_module_1.SubmissionModule
         ],
     })
 ], FeaturesModule);

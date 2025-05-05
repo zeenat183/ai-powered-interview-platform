@@ -8,6 +8,12 @@ export declare enum Difficulty {
     MEDIUM = "medium",
     HARD = "hard"
 }
+declare class LanguageTemplatesDto {
+    cpp: string;
+    java: string;
+    python: string;
+    javascript: string;
+}
 declare class ExampleTestCase {
     input: string;
     output: string;
@@ -21,6 +27,7 @@ export declare class DsaQuestionDto {
     constraints?: string;
     exampleTestCases: ExampleTestCase[];
     hiddenTestCases: HiddenTestCase[];
+    codeTemplates: LanguageTemplatesDto;
 }
 export declare class AptitudeMcqQuestionDto {
     options: string[];
@@ -37,13 +44,7 @@ export declare class CreateQuestionDto {
     questionType: QuestionType;
     topics: string[];
     languagesSupported?: string[];
-    questionDetails: {
-        dsaQuestion: DsaQuestionDto;
-    } | {
-        aptitudeMcq: AptitudeMcqQuestionDto;
-    } | {
-        systemDesign: SystemDesignQuestionDto;
-    };
+    questionDetails: any;
 }
 export declare class QuestionResponseDto {
     questionId: string;

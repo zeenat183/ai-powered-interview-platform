@@ -24,6 +24,28 @@ var Difficulty;
     Difficulty["MEDIUM"] = "medium";
     Difficulty["HARD"] = "hard";
 })(Difficulty || (exports.Difficulty = Difficulty = {}));
+class LanguageTemplatesDto {
+    cpp;
+    java;
+    python;
+    javascript;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], LanguageTemplatesDto.prototype, "cpp", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], LanguageTemplatesDto.prototype, "java", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], LanguageTemplatesDto.prototype, "python", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], LanguageTemplatesDto.prototype, "javascript", void 0);
 class ExampleTestCase {
     input;
     output;
@@ -58,6 +80,7 @@ class DsaQuestionDto {
     constraints;
     exampleTestCases;
     hiddenTestCases;
+    codeTemplates;
 }
 exports.DsaQuestionDto = DsaQuestionDto;
 __decorate([
@@ -77,6 +100,11 @@ __decorate([
     (0, class_transformer_1.Type)(() => HiddenTestCase),
     __metadata("design:type", Array)
 ], DsaQuestionDto.prototype, "hiddenTestCases", void 0);
+__decorate([
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => LanguageTemplatesDto),
+    __metadata("design:type", LanguageTemplatesDto)
+], DsaQuestionDto.prototype, "codeTemplates", void 0);
 class AptitudeMcqQuestionDto {
     options;
     correctAnswer;
@@ -146,8 +174,6 @@ __decorate([
 ], CreateQuestionDto.prototype, "languagesSupported", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.ValidateNested)(),
-    (0, class_transformer_1.Type)(() => Object),
     __metadata("design:type", Object)
 ], CreateQuestionDto.prototype, "questionDetails", void 0);
 class QuestionResponseDto {

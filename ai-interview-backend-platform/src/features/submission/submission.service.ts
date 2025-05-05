@@ -1,0 +1,145 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { from, map, Observable, switchMap } from 'rxjs';
+import { CreateSubmissionDto, SubmissionAttemptStatus, SubmissionResponseDto } from 'src/interfaces/submission.dto';
+import { SubmissionHelperService } from './submission-helper.service';
+import { Judge0Service } from 'src/http/judge0/judge0.service';
+import { Submission } from 'src/database/schemas/submission.schema';
+import { QuestionHelperService } from '../question/question-helper.service';
+import { QuestionType } from 'src/interfaces/question.dto';
+import { CoreSubmissionService } from 'src/core/submission/submission.service';
+
+
+@Injectable()
+export class SubmissionService {
+  constructor(
+    private readonly helper: SubmissionHelperService,
+    private readonly questionHelper: QuestionHelperService,
+    private readonly judge0: Judge0Service,
+    private readonly coreSubmissionService: CoreSubmissionService,
+  ) {}
+
+  createSubmission({
+    dto,
+  }: Readonly<{ dto: CreateSubmissionDto }>): Observable<SubmissionResponseDto> {
+    const { submissionDetails, questionId, questionType, ...rest } = dto;
+    const attempt = {...submissionDetails[0],result:null,status:SubmissionAttemptStatus.PENDING,feedback:null,resultMap:{}};
+    const language = attempt.language;
+  
+    const languageId = this.mapLanguageToJudge0Id(language);
+  
+    return from(this.questionHelper.getQuestionById(questionId)).pipe(
+      switchMap((question) => {
+        if (!question || question.questionType !== QuestionType.DSA) {
+          throw new NotFoundException('Question not found or invalid question');
+        }
+  
+        const questionDetails = question.questionDetails;
+        if (!('dsaQuestion' in questionDetails)) {
+          throw new NotFoundException('Invalid question type. Expected DSA.');
+        }
+  
+        const dsaQuestion = questionDetails.dsaQuestion;
+  
+        if (
+          !dsaQuestion ||
+          !dsaQuestion.codeTemplates ||
+          !dsaQuestion.exampleTestCases ||
+          !dsaQuestion.hiddenTestCases
+        ) {
+          throw new NotFoundException('Invalid question structure for DSA type');
+        }
+  
+        const template = dsaQuestion.codeTemplates[language as string];
+        if (!template) throw new NotFoundException(`No template for language ${language}`);
+  
+        return this.coreSubmissionService.wrapCode(
+          attempt.answer,
+          language as string,
+          template,
+          dsaQuestion.exampleTestCases,
+          dsaQuestion.hiddenTestCases,
+        ).pipe(
+          switchMap((finalCode) =>{
+           return from(this.judge0.submitCode(finalCode, languageId)).pipe(
+              map((judge0Result) => ({
+                judge0Result,
+                dsaQuestion,
+              }))
+            )
+          }
+          )
+        );
+      }),
+      switchMap(({ judge0Result, dsaQuestion }) => {
+        attempt.result = judge0Result;
+        attempt.status = this.getStatusFromJudge0(judge0Result.status?.description || '');
+  
+        // ✅ Apply test case feedback mapping here
+        const feedback = this.coreSubmissionService.mapTestCaseResults({
+          exampleTestCases: dsaQuestion.exampleTestCases,
+          hiddenTestCases: dsaQuestion.hiddenTestCases,
+          stdout: judge0Result.stdout || '',
+        });
+  
+        attempt.resultMap = feedback;
+  
+        return from(
+          this.helper.createSubmission(
+             {
+              questionId,
+              questionType,
+              ...rest,
+              submissionDetails: [attempt],
+            },
+          )
+        );
+      }),
+      map((submission) => this.toResponseDto(submission)),
+    );
+  }
+  
+
+  getSubmissionById(id: string): Observable<SubmissionResponseDto> {
+    return from(this.helper.getSubmissionById(id)).pipe(
+      map(sub => this.toResponseDto(sub)),
+    );
+  }
+
+  getSubmissionsByUser(userId: string): Observable<SubmissionResponseDto[]> {
+    return from(this.helper.getSubmissionsByUser(userId)).pipe(
+      map(submissions => submissions.map(sub => this.toResponseDto(sub))),
+    );
+  }
+
+  // 🔧 FIXED: Inside class now
+  private mapLanguageToJudge0Id(lang?: string): number {
+    const map: Record<string, number> = {
+      cpp: 54,
+      python: 71,
+      java: 62,
+      javascript: 63,
+    };
+    return map[lang || ''] || 54; // fallback to cpp
+  }
+
+  private getStatusFromJudge0(description: string): SubmissionAttemptStatus {
+    const lower = description.toLowerCase();
+  
+    if (lower.includes('accepted')) return SubmissionAttemptStatus.PASSED;
+    if (lower.includes('error') || lower.includes('failed')) return SubmissionAttemptStatus.ERROR;
+    return SubmissionAttemptStatus.FAILED;
+  }
+
+  private toResponseDto(sub: Submission): SubmissionResponseDto {
+    return {
+     // _id: sub._id.toString(),
+      userId: sub.userId,
+      questionId: sub.questionId,
+      questionType: sub.questionType,
+      status: sub.status,
+      submissionDetails: sub.submissionDetails,
+      createdAt: sub.createdAt,
+      updatedAt: sub.updatedAt,
+    };
+  }
+}
