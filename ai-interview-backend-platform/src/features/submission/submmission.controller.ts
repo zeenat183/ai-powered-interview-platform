@@ -14,13 +14,18 @@ export class SubmissionController {
     return this.submissionService.createSubmission({dto});
   }
 
-  @Get(':id')
-  getSubmissionById(@Param('id') id: string): Observable<SubmissionResponseDto> {
-    return this.submissionService.getSubmissionById(id);
-  }
+  // @Get(':id')
+  // getSubmissionById(@Param('id') id: string): Observable<SubmissionResponseDto> {
+  //   return this.submissionService.getSubmissionById(id);
+  // }
 
   @Get('/user/:userId')
   getSubmissionsByUser(@Param('userId') userId: string): Observable<SubmissionResponseDto[]> {
     return this.submissionService.getSubmissionsByUser(userId);
+  }
+
+  @Get('/:userId/:questionId')
+  getSubmissionsByUserId(@Param('userId') userId: string,@Param('questionId') questionId: string,): Observable<SubmissionResponseDto> {
+    return this.submissionService.getSubmissionsByUserAndQuestionId({userId,questionId});
   }
 }

@@ -30,7 +30,7 @@ let SubmissionService = class SubmissionService {
         this.coreSubmissionService = coreSubmissionService;
     }
     createSubmission({ dto, }) {
-        const { submissionDetails, questionId, questionType, ...rest } = dto;
+        const { submissionDetails, questionId, questionType, userId, status } = dto;
         const attempt = { ...submissionDetails[0], result: null, status: submission_dto_1.SubmissionAttemptStatus.PENDING, feedback: null, resultMap: {} };
         const language = attempt.language;
         const languageId = this.mapLanguageToJudge0Id(language);
@@ -53,7 +53,6 @@ let SubmissionService = class SubmissionService {
             if (!template)
                 throw new common_1.NotFoundException(`No template for language ${language}`);
             return this.coreSubmissionService.wrapCode(attempt.answer, language, template, dsaQuestion.exampleTestCases, dsaQuestion.hiddenTestCases).pipe((0, rxjs_1.switchMap)((finalCode) => {
-                console.log('--------finalCode-------', finalCode);
                 return (0, rxjs_1.from)(this.judge0.submitCode(finalCode, languageId)).pipe((0, rxjs_1.map)((judge0Result) => ({
                     judge0Result,
                     dsaQuestion,
@@ -61,27 +60,49 @@ let SubmissionService = class SubmissionService {
             }));
         }), (0, rxjs_1.switchMap)(({ judge0Result, dsaQuestion }) => {
             attempt.result = judge0Result;
-            attempt.status = this.getStatusFromJudge0(judge0Result.status?.description || '');
             const feedback = this.coreSubmissionService.mapTestCaseResults({
                 exampleTestCases: dsaQuestion.exampleTestCases,
                 hiddenTestCases: dsaQuestion.hiddenTestCases,
                 stdout: judge0Result.stdout || '',
             });
-            console.log("----------feedback-----------", feedback);
+            attempt.status = feedback.every((obj) => {
+                return obj.actualOutput === obj.expectedOutput;
+            }) ? submission_dto_1.SubmissionAttemptStatus.PASSED : submission_dto_1.SubmissionAttemptStatus.FAILED;
             attempt.resultMap = feedback;
-            return (0, rxjs_1.from)(this.helper.createSubmission({
+            return (0, rxjs_1.from)(this.createOrUpdateSubmission({
                 questionId,
                 questionType,
-                ...rest,
-                submissionDetails: [attempt],
+                userId, status,
+                submissionDetails: attempt,
             }));
         }), (0, rxjs_1.map)((submission) => this.toResponseDto(submission)));
     }
-    getSubmissionById(id) {
-        return (0, rxjs_1.from)(this.helper.getSubmissionById(id)).pipe((0, rxjs_1.map)(sub => this.toResponseDto(sub)));
+    createOrUpdateSubmission({ questionId, questionType, userId, status, submissionDetails }) {
+        return (0, rxjs_1.from)(this.helper.findByUserAndQuestion(userId, questionId)).pipe((0, rxjs_1.switchMap)((result) => {
+            if (!result) {
+                return (0, rxjs_1.from)(this.helper.createSubmission({
+                    questionId,
+                    questionType,
+                    userId,
+                    status: submissionDetails.status === submission_dto_1.SubmissionAttemptStatus.PASSED ? submission_dto_1.SubmissionStatus.PASSED : submission_dto_1.SubmissionStatus.ATTEMPTED,
+                    submissionDetails: [submissionDetails],
+                }));
+            }
+            const updatedSubmission = {
+                questionId,
+                questionType,
+                userId,
+                status: submissionDetails.status === submission_dto_1.SubmissionAttemptStatus.PASSED ? submission_dto_1.SubmissionStatus.PASSED : result.status,
+                submissionDetails: [...result.submissionDetails, submissionDetails]
+            };
+            return (0, rxjs_1.from)(this.helper.updateSubmission(userId, questionId, updatedSubmission));
+        }));
     }
     getSubmissionsByUser(userId) {
         return (0, rxjs_1.from)(this.helper.getSubmissionsByUser(userId)).pipe((0, rxjs_1.map)(submissions => submissions.map(sub => this.toResponseDto(sub))));
+    }
+    getSubmissionsByUserAndQuestionId({ userId, questionId }) {
+        return (0, rxjs_1.from)(this.helper.getSubmissionsByUserAndQuestion({ userId, questionId })).pipe((0, rxjs_1.map)(submissions => this.toResponseDto(submissions)));
     }
     mapLanguageToJudge0Id(lang) {
         const map = {
