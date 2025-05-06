@@ -34,7 +34,6 @@ let CoreSubmissionService = class CoreSubmissionService {
             const inputArrayStr = language === 'cpp' || language === 'java'
                 ? `{${formatted.join(', ')}}`
                 : `[${formatted.join(', ')}]`;
-            console.log('----userCode---', userCode.trim());
             const codeWithInputs = template.replace('{{INPUT_ARRAY}}', inputArrayStr);
             const finalCode = codeWithInputs.replace('// your code here', userCode.trim());
             return finalCode;

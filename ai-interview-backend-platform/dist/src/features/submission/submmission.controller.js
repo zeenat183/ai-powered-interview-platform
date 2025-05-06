@@ -25,11 +25,11 @@ let SubmissionController = class SubmissionController {
     createSubmission(dto) {
         return this.submissionService.createSubmission({ dto });
     }
-    getSubmissionById(id) {
-        return this.submissionService.getSubmissionById(id);
-    }
     getSubmissionsByUser(userId) {
         return this.submissionService.getSubmissionsByUser(userId);
+    }
+    getSubmissionsByUserId(userId, questionId) {
+        return this.submissionService.getSubmissionsByUserAndQuestionId({ userId, questionId });
     }
 };
 exports.SubmissionController = SubmissionController;
@@ -41,19 +41,20 @@ __decorate([
     __metadata("design:returntype", rxjs_1.Observable)
 ], SubmissionController.prototype, "createSubmission", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", rxjs_1.Observable)
-], SubmissionController.prototype, "getSubmissionById", null);
-__decorate([
     (0, common_1.Get)('/user/:userId'),
     __param(0, (0, common_1.Param)('userId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", rxjs_1.Observable)
 ], SubmissionController.prototype, "getSubmissionsByUser", null);
+__decorate([
+    (0, common_1.Get)('/:userId/:questionId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Param)('questionId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", rxjs_1.Observable)
+], SubmissionController.prototype, "getSubmissionsByUserId", null);
 exports.SubmissionController = SubmissionController = __decorate([
     (0, common_1.Controller)('submission'),
     __metadata("design:paramtypes", [submission_service_1.SubmissionService])

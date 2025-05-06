@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { from, map, Observable, switchMap } from 'rxjs';
-import { CreateSubmissionDto, SubmissionAttemptStatus, SubmissionResponseDto } from 'src/interfaces/submission.dto';
+import { CreateSubmissionDto, SubmissionAttemptStatus, SubmissionResponseDto, SubmissionStatus } from 'src/interfaces/submission.dto';
 import { SubmissionHelperService } from './submission-helper.service';
 import { Judge0Service } from 'src/http/judge0/judge0.service';
 import { Submission } from 'src/database/schemas/submission.schema';
@@ -21,7 +21,7 @@ export class SubmissionService {
   createSubmission({
     dto,
   }: Readonly<{ dto: CreateSubmissionDto }>): Observable<SubmissionResponseDto> {
-    const { submissionDetails, questionId, questionType, ...rest } = dto;
+    const { submissionDetails, questionId, questionType, userId,status } = dto;
     const attempt = {...submissionDetails[0],result:null,status:SubmissionAttemptStatus.PENDING,feedback:null,resultMap:{}};
     const language = attempt.language;
   
@@ -72,7 +72,7 @@ export class SubmissionService {
       }),
       switchMap(({ judge0Result, dsaQuestion }) => {
         attempt.result = judge0Result;
-        attempt.status = this.getStatusFromJudge0(judge0Result.status?.description || '');
+        //attempt.status = this.getStatusFromJudge0(judge0Result.status?.description || '');
   
         // ✅ Apply test case feedback mapping here
         const feedback = this.coreSubmissionService.mapTestCaseResults({
@@ -80,16 +80,19 @@ export class SubmissionService {
           hiddenTestCases: dsaQuestion.hiddenTestCases,
           stdout: judge0Result.stdout || '',
         });
-  
+
+        attempt.status=feedback.every((obj)=>{
+          return obj.actualOutput===obj.expectedOutput;
+        })?SubmissionAttemptStatus.PASSED :SubmissionAttemptStatus.FAILED;
         attempt.resultMap = feedback;
   
         return from(
-          this.helper.createSubmission(
+          this.createOrUpdateSubmission(
              {
               questionId,
               questionType,
-              ...rest,
-              submissionDetails: [attempt],
+              userId,status,
+              submissionDetails: attempt,
             },
           )
         );
@@ -97,17 +100,51 @@ export class SubmissionService {
       map((submission) => this.toResponseDto(submission)),
     );
   }
+
+  createOrUpdateSubmission({ questionId,
+    questionType,
+    userId,status,
+    submissionDetails}):Observable<any>{
+      return from(this.helper.findByUserAndQuestion(userId,questionId)).pipe(
+        switchMap((result)=>{
+          if(!result){
+            return from(this.helper.createSubmission({
+              questionId,
+              questionType,
+              userId,
+              status:submissionDetails.status=== SubmissionAttemptStatus.PASSED ?SubmissionStatus.PASSED :SubmissionStatus.ATTEMPTED,
+              submissionDetails: [submissionDetails],
+            }));
+          }
+
+          const updatedSubmission = {
+            questionId,
+              questionType,
+              userId,
+              status: submissionDetails.status=== SubmissionAttemptStatus.PASSED ?SubmissionStatus.PASSED :result.status,
+              submissionDetails:[...result.submissionDetails,submissionDetails]
+          }
+          return from(this.helper.updateSubmission(userId,questionId,updatedSubmission,)); 
+        })
+      )
+    }
   
 
-  getSubmissionById(id: string): Observable<SubmissionResponseDto> {
-    return from(this.helper.getSubmissionById(id)).pipe(
-      map(sub => this.toResponseDto(sub)),
-    );
-  }
+  // getSubmissionById(id: string): Observable<SubmissionResponseDto> {
+  //   return from(this.helper.getSubmissionById(id)).pipe(
+  //     map(sub => this.toResponseDto(sub)),
+  //   );
+  // }
 
   getSubmissionsByUser(userId: string): Observable<SubmissionResponseDto[]> {
     return from(this.helper.getSubmissionsByUser(userId)).pipe(
       map(submissions => submissions.map(sub => this.toResponseDto(sub))),
+    );
+  }
+
+  getSubmissionsByUserAndQuestionId({userId,questionId}:Readonly<{userId:string,questionId:string}>): Observable<SubmissionResponseDto> {
+    return from(this.helper.getSubmissionsByUserAndQuestion({userId,questionId})).pipe(
+      map(submissions =>  this.toResponseDto(submissions)),
     );
   }
 
