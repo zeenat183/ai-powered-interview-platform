@@ -13,8 +13,18 @@ export declare class SubmissionService {
     createSubmission({ dto, }: Readonly<{
         dto: CreateSubmissionDto;
     }>): Observable<SubmissionResponseDto>;
-    getSubmissionById(id: string): Observable<SubmissionResponseDto>;
+    createOrUpdateSubmission({ questionId, questionType, userId, status, submissionDetails }: {
+        questionId: any;
+        questionType: any;
+        userId: any;
+        status: any;
+        submissionDetails: any;
+    }): Observable<any>;
     getSubmissionsByUser(userId: string): Observable<SubmissionResponseDto[]>;
+    getSubmissionsByUserAndQuestionId({ userId, questionId }: Readonly<{
+        userId: string;
+        questionId: string;
+    }>): Observable<SubmissionResponseDto>;
     private mapLanguageToJudge0Id;
     private getStatusFromJudge0;
     private toResponseDto;

@@ -31,6 +31,17 @@ let SubmissionRepository = class SubmissionRepository {
     findAllByUser(userId) {
         return this.submissionModel.find({ userId }).exec();
     }
+    findAllByUserAndQuestion({ userId, questionId }) {
+        return this.submissionModel.findOne({ userId, questionId }).exec();
+    }
+    findOne(filter) {
+        return this.submissionModel.findOne(filter).exec();
+    }
+    updateByUserAndQuestion(userId, questionId, update) {
+        return this.submissionModel
+            .findOneAndUpdate({ userId, questionId }, update, { new: true })
+            .exec();
+    }
 };
 exports.SubmissionRepository = SubmissionRepository;
 exports.SubmissionRepository = SubmissionRepository = __decorate([
