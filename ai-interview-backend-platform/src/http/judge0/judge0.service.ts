@@ -37,6 +37,7 @@ export class Judge0Service {
       );
       return response.data;
     } catch (err) {
+      console.log("--------------here catching and throwing error-------------");
       throw new Judge0SubmissionError(err.message);
     }
   }

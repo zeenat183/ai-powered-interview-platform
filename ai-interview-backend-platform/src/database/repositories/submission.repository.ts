@@ -41,6 +41,15 @@ export class SubmissionRepository {
       .exec();
   }
   
+  updateFeedbackBySubmissionId(
+    where,data
+  ): Promise<any> {
+    return this.submissionModel
+      .updateOne(
+       where,data
+      )
+      .exec();
+  }
 
   // Extend with updateSubmission/addAttempt etc. if needed later
 }

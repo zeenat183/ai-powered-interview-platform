@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';//NestJS uses @nestjs/config to re
 import { UserModule } from './features/user/user.module';
 import { RedisModule } from './common/redis/redis.module';
 import { FeaturesModule } from './features/features.module';
+import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { FeaturesModule } from './features/features.module';
     //MongooseModule.forRoot(process.env.MONGODB_URI as string),
     DatabaseModule,
     FeaturesModule,
-    RedisModule
+    RedisModule,RabbitMQModule
   ],
   controllers: [AppController],
   providers: [AppService],

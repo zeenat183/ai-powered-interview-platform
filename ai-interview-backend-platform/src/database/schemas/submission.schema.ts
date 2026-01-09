@@ -28,21 +28,24 @@ export enum SubmissionStatus {
 
 @Schema({ _id: false }) // _id: false is important for embedded subdocuments
 export class MappedTestCaseResult {
-  @Prop({ required: true })
+  @Prop({ required: false })
   input: string;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   expectedOutput: string;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   actualOutput: string;
 
-  @Prop({ required: true, enum: ['example', 'hidden'] })
+  @Prop({ required: false, enum: ['example', 'hidden'] })
   type: 'example' | 'hidden';
 }
 
 @Schema()
 export class SubmissionDetail {
+  @Prop({ required: true })
+  submissionId:string;
+
   @Prop({ required: true })
   answer: string;
 
@@ -51,6 +54,7 @@ export class SubmissionDetail {
 
   @Prop()
   language?: string;
+
 
   @Prop({ type: Object, default: null })
   feedback?: Record<string, any> | null;
