@@ -7,7 +7,7 @@ import {
 import { LoginUserDto, RegisterUserDto, UpdateUserDto } from '../../interfaces/user.dto';
 import { from, Observable, of, throwError } from 'rxjs';
 import { switchMap, map } from 'rxjs/operators';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { UserHelperService } from './user-helper.service';
 import { v4 as uuidv4 } from 'uuid';

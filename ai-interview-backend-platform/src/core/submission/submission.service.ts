@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { from, map, Observable } from 'rxjs';
+import { from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { MappedTestCaseResult } from './submission.interface';
+import { FeedbackProducer } from 'src/rabbitmq/feedback/feedback.producer';
 
 @Injectable()
 export class CoreSubmissionService {
-
+   constructor(
+     private readonly feedbackProducer: FeedbackProducer,
+   ) {}
     mapTestCaseResults({
         exampleTestCases,
         hiddenTestCases,
@@ -57,5 +60,21 @@ export class CoreSubmissionService {
         return finalCode;
       }),
     );
+  }
+
+   addFeedbackJob({userId,questionId,submissionId,judge0Result,finalCode,dsaQuestion,resultMap}:Readonly<{userId:string;questionId:string;submissionId:any;judge0Result:any,finalCode:any,dsaQuestion:string,resultMap:any}>):Observable<any>{
+    let failedTestCases = [];
+    console.log("---------here to add job----------");
+    const judge0Error =judge0Result?.stderr;
+    failedTestCases= resultMap.filter((result)=>
+      result?.expectedOutput!=result?.actualOutput);
+    const payload = {userId,questionId,submissionId,question:dsaQuestion,code :finalCode,judge0Error,failedTestCases};
+    return of(payload).pipe(
+      tap(() => console.log('📦 Payload ready for switchMap---',payload)),
+    switchMap((payload) => {
+      console.log('-----------in switch map of job---------');
+      return from(this.feedbackProducer.publishFeedbackJob(payload))}),
+    map(() => judge0Result) // optionally return result after publishing
+  );
   }
 }

@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { from, map, Observable, switchMap } from 'rxjs';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { catchError, from, map, Observable, switchMap, throwError } from 'rxjs';
 import { CreateSubmissionDto, SubmissionAttemptStatus, SubmissionResponseDto, SubmissionStatus } from 'src/interfaces/submission.dto';
 import { SubmissionHelperService } from './submission-helper.service';
 import { Judge0Service } from 'src/http/judge0/judge0.service';
@@ -22,7 +22,10 @@ export class SubmissionService {
     dto,
   }: Readonly<{ dto: CreateSubmissionDto }>): Observable<SubmissionResponseDto> {
     const { submissionDetails, questionId, questionType, userId,status } = dto;
-    const attempt = {...submissionDetails[0],result:null,status:SubmissionAttemptStatus.PENDING,feedback:null,resultMap:{}};
+    const timestamp = Date.now(); // current time in milliseconds
+    const random = Math.floor(1000 + Math.random() * 9000); // random 4-digit number
+    const submissionId= `sub_${timestamp}_${random}`;
+    const attempt = {...submissionDetails[0],submissionId,result:null,status:SubmissionAttemptStatus.PENDING,feedback:null,resultMap:{}};
     const language = attempt.language;
   
     const languageId = this.mapLanguageToJudge0Id(language);
@@ -64,17 +67,25 @@ export class SubmissionService {
               map((judge0Result) => ({
                 judge0Result,
                 dsaQuestion,
-              }))
+                finalCode,
+                question
+              })),
+              catchError((err)=>{
+                return throwError(() => new BadRequestException('Failed to process submission using Judge0'));
+              })
             )
           }
           )
         );
       }),
-      switchMap(({ judge0Result, dsaQuestion }) => {
+      switchMap(({ judge0Result, dsaQuestion ,finalCode,question}) => {
+        console.log('--------judge0Result--------',judge0Result);
         attempt.result = judge0Result;
         //attempt.status = this.getStatusFromJudge0(judge0Result.status?.description || '');
   
         // ✅ Apply test case feedback mapping here
+        if(!judge0Result?.stderr){
+          console.log('-----------here in if-----------------',judge0Result?.stderr);
         const feedback = this.coreSubmissionService.mapTestCaseResults({
           exampleTestCases: dsaQuestion.exampleTestCases,
           hiddenTestCases: dsaQuestion.hiddenTestCases,
@@ -85,7 +96,15 @@ export class SubmissionService {
           return obj.actualOutput===obj.expectedOutput;
         })?SubmissionAttemptStatus.PASSED :SubmissionAttemptStatus.FAILED;
         attempt.resultMap = feedback;
-  
+      }
+      else {
+        attempt.status = SubmissionAttemptStatus.ERROR
+      }
+      this.coreSubmissionService.addFeedbackJob({userId,questionId,submissionId:attempt?.submissionId,judge0Result,finalCode,dsaQuestion:`${question?.title}\n\n${question?.description}\n\nConstraints:\n${dsaQuestion?.constraints}`,resultMap:attempt?.resultMap }).subscribe({
+  next: (res) => console.log('✅ Job added to queue', res),
+  error: (err) => console.error('❌ Failed to enqueue job', err),
+});
+      console.log("----hehe----");
         return from(
           this.createOrUpdateSubmission(
              {
@@ -105,6 +124,7 @@ export class SubmissionService {
     questionType,
     userId,status,
     submissionDetails}):Observable<any>{
+      console.log("------------here in db update----------");
       return from(this.helper.findByUserAndQuestion(userId,questionId)).pipe(
         switchMap((result)=>{
           if(!result){
